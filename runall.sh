@@ -1,8 +1,9 @@
-#!/bin/bash -e
+#!/bin/bash
 
 function runTestPHP {
-	runTest php "(PHP)" "$@"
-	runTest "hhvm -vEval.Jit=1" "(HHVM)" "$@"
+#	runTest "php -d max_execution_time=1" "(PHP)" "$@"
+    runTest "hhvm" "(HHVM)" "$@"
+	runTest "hhvm -vEval.Jit=1" "(HHVM-JIT)" "$@"
 	
 }
 
@@ -22,13 +23,19 @@ function runTest {
 		min=0
 		max=0
 
-		echo -ne "Test: \033[36;40m${!i}\033[0;00m"
+		printf "Test: \033[36;40m%13s\033[0;00m" "${!i}"
 		((i++))
 
 		for (( j=1; j<=$iterations; j++ ))
 		do
-			echo -n " $j..."
-			result=`$1 ${!i}`
+			echo -n " $j.."
+			result=`$1 ${!i} 2>/dev/null`
+			if [ "$?" -ne 0 ]; then
+				echo -ne "\033[31;40mF\033[0;00m"
+				continue
+			else
+				echo -ne .
+			fi
 			time=`echo $result | awk '{print $2}'`
 
 			sum=`bc <<< " $sum + $time"`
